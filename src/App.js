@@ -38,7 +38,7 @@ function App() {
           </div>
         )}
         <label className="labelSize" htmlFor="name">
-          Votre prenom :
+          Votre prénom :
         </label>
         <input
           type="text"
