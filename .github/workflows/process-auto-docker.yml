@@ -23,6 +23,7 @@ jobs:
       - name: Configure Docker for Google Cloud
         run: |
           gcloud auth configure-docker europe-west9-docker.pkg.dev
+
       - name: Build the Docker image
         run: docker build -t europe-west9-docker.pkg.dev/pokedevops/student-amine/pokemon .
 
@@ -34,4 +35,4 @@ jobs:
           gcloud run deploy service-student-amine-dev --image=europe-west9-docker.pkg.dev/pokedevops/student-amine/pokemon --project pokedevops --region europe-west9 --allow-unauthenticated
         env:
           GCP_PROJECT: pokedevops
-          GCP_REGION: europe-west9
+          GCP_REGION: europe-west9
