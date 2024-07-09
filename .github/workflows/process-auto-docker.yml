@@ -3,7 +3,7 @@ name: Build, Push & Deploy Docker Image to Google Cloud
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build-and-push:
@@ -23,6 +23,7 @@ jobs:
       - name: Configure Docker for Google Cloud
         run: |
           gcloud auth configure-docker europe-west9-docker.pkg.dev
+
       - name: Build the Docker image
         run: docker build -t europe-west9-docker.pkg.dev/pokedevops/student-amine/pokemon .
 
