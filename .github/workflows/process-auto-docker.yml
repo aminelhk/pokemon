@@ -4,9 +4,12 @@ on:
   push:
     branches:
       - master
+  issues:
+    types: [opened, edited]
 
 jobs:
   build-and-push:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -36,3 +39,55 @@ jobs:
         env:
           GCP_PROJECT: pokedevops
           GCP_REGION: europe-west9
+
+  deploy-on-issue:
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if issue has deploy label
+        id: check_deploy_label
+        run: |
+          if ! echo "${{ github.event.issue.labels }}" | grep -q "deploy"; then
+            echo "No deploy label found. Exiting."
+            exit 0
+          fi
+
+      - name: Extract version from issue comment
+        id: extract_version
+        run: |
+          VERSION=$(echo "${{ github.event.issue.body }}" | grep -oP 'version \K[\d.]+')
+          if [ -z "$VERSION" ]; then
+            echo "No version specified. Exiting."
+            exit 1
+          fi
+          echo "::set-output name=version::$VERSION"
+        shell: bash
+
+      - name: Log in to Google Cloud
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: '${{ secrets.GCLOUD_SERVICE_ACCOUNT_KEY }}'
+
+      - name: Configure Docker for Google Cloud
+        run: |
+          gcloud auth configure-docker europe-west9-docker.pkg.dev
+
+      - name: Build the Docker image with specified version
+        run: docker build -t europe-west9-docker.pkg.dev/pokedevops/student-amine/pokemon:${{ steps.extract_version.outputs.version }} .
+
+      - name: Push the Docker image with specified version
+        run: docker push europe-west9-docker.pkg.dev/pokedevops/student-amine/pokemon:${{ steps.extract_version.outputs.version }}
+
+      - name: Deploy to Google Cloud Run with specified version
+        run: |
+          gcloud run deploy service-student-amine-dev --image=europe-west9-docker.pkg.dev/pokedevops/student-amine/pokemon:${{ steps.extract_version.outputs.version }} --project pokedevops --region europe-west9 --allow-unauthenticated
+        env:
+          GCP_PROJECT: pokedevops
+          GCP_REGION: europe-west9
+
+      - name: Comment on the issue
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            Votre issue a été correctement traitée et la version ${{ steps.extract_version.outputs.version }} a été déployée en production.
