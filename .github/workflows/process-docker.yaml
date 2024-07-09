@@ -1,0 +1,42 @@
+name: Docker Image CI/CD
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout the code
+      uses: actions/checkout@v4
+
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        project_id: pokedevops
+        service_account_key: ${{ secrets.GCLOUD_SERVICE_ACCOUNT_KEY }}
+
+    - name: Configure Docker to use the gcloud command-line tool as a credential helper
+      run: |
+        gcloud auth configure-docker europe-west9-docker.pkg.dev
+
+    - name: Build the Docker image
+      run: |
+        docker build -t europe-west9-docker.pkg.dev/pokedevops/student-amine/pokemon .
+
+    - name: Push the Docker image
+      run: |
+        docker push europe-west9-docker.pkg.dev/pokedevops/student-amine/pokemon
+
+    - name: Deploy to Cloud Run
+      run: |
+        gcloud run deploy service-student-amine-dev \
+          --image=europe-west9-docker.pkg.dev/pokedevops/student-amine/pokemon \
+          --region=europe-west9 \
+          --platform=managed \
+          --project=pokedevops \
+          --allow-unauthenticated
