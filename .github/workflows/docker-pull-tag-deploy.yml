@@ -26,7 +26,10 @@ jobs:
 
       - name: Extract git commit SHA
         id: vars
-        run: echo "::set-output name=commit_id::$(echo $GITHUB_SHA | cut -c1-7)"
+        run: |
+          COMMIT_ID=$(git rev-list -n 1 ${{ github.ref }})
+          echo "::set-output name=commit_id::${COMMIT_ID}"
+          echo "Commit ID: $COMMIT_ID"
 
       - name: Pull Docker image with commit ID
         run: |
@@ -34,18 +37,18 @@ jobs:
 
       - name: Tag Docker image with new tag
         run: |
-          docker tag europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-dev:${{ steps.vars.outputs.commit_id }} europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-preprod:${GITHUB_REF_NAME}
+          docker tag europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-dev:${{ steps.vars.outputs.commit_id }} europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-preprod:${{ github.ref_name }}
 
       - name: Push Docker image with new tag
         run: |
-          docker push europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-preprod:${GITHUB_REF_NAME}
+          docker push europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-preprod:${{ github.ref_name }}
 
       - name: Deploy to Cloud Run
         env:
           PROJECT_ID: "pokedevops"
           SERVICE_NAME: "service-student-amine-preprod"
           REGION: "europe-west9"
-          IMAGE: "europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-preprod:${GITHUB_REF_NAME}"
+          IMAGE: "europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-preprod:${{ github.ref_name }}"
         run: |
           gcloud run deploy $SERVICE_NAME \
             --image $IMAGE \
