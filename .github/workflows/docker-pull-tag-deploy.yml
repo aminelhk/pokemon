@@ -3,7 +3,7 @@ name: Docker Pull, Tag, and Deploy
 on:
   push:
     tags:
-      - '*' # Trigger on all tags
+      - "*" # Trigger on all tags
 
 jobs:
   pull-tag-deploy:
@@ -31,9 +31,10 @@ jobs:
           echo "::set-output name=commit_id::${COMMIT_ID}"
           echo "Commit ID: $COMMIT_ID"
 
-      - name: Pull Docker image with commit ID
+      - name: Check if Docker image with commit ID exists
         run: |
           docker pull europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-dev:${{ steps.vars.outputs.commit_id }}
+          # Check if the pull was successful or handle error
 
       - name: Tag Docker image with new tag
         run: |
