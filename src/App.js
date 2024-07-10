@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./App.css";
+import version from "./version";
 
 function App() {
   const [pokemon, setPokemon] = useState(null);
@@ -52,6 +53,9 @@ function App() {
           Découvrez votre Pokémon!
         </button>
       </header>
+      <footer className="App-footer">
+        <p>Version: {version}</p>
+      </footer>
     </div>
   );
 }
