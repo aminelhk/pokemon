@@ -1,0 +1,48 @@
+name: deploy app to environment
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        default: prod
+        required: true
+        options:
+          - preprod
+          - prod
+      version:
+        description: "App version"
+        required: true
+env:
+  PROJECT_ID: pokedevops
+  APP_NAME: quelpoke
+  REGION: europe-west9
+  REGISTRY: student-yann
+  CLOUDRUN_SERVICE_PREFIX: service-student-yann
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: export registry domain
+        run: echo "REGISTRY_DOMAIN=${REGION}-docker.pkg.dev" >> $GITHUB_ENV
+
+      - name: export image name env
+        run: echo "IMAGE_NAME=${REGISTRY_DOMAIN}/${PROJECT_ID}/${REGISTRY}/${APP_NAME}:${{ github.event.inputs.version }}" >> $GITHUB_ENV
+
+      - name: "gcloud auth"
+        uses: "google-github-actions/auth@v2"
+        with:
+          credentials_json: "${{ secrets.SERVICE_ACCOUNT_KEY }}"
+
+      - name: gcloud configure docker
+        run: gcloud --quiet auth configure-docker ${REGION}-docker.pkg.dev
+
+      - name: check if image exists
+        run: docker pull ${IMAGE_NAME}
+
+      - name: gcloud run deploy
+        run: |
+          gcloud run deploy ${CLOUDRUN_SERVICE_PREFIX}-"${{ github.event.inputs.environment }}" \
+          --image=${IMAGE_NAME} \
+          --project=${PROJECT_ID} \
+          --region=${REGION} \
+          --set-env-vars=VERSION=${{ github.event.inputs.version }}

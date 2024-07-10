@@ -1,0 +1,54 @@
+name: docker tag and push to preprod
+on:
+  push:
+    tags:
+      - "*"
+env:
+  PROJECT_ID: pokedevops
+  APP_NAME: quelpoke
+  REGION: europe-west9
+  REGISTRY: student-yann
+  CLOUDRUN_SERVICE: service-student-yann-preprod
+
+jobs:
+  docker-tag-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: export short sha env
+        run: echo "GITHUB_SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: export registry domain
+        run: echo "REGISTRY_DOMAIN=${REGION}-docker.pkg.dev" >> $GITHUB_ENV
+
+      - name: export image name env
+        run: echo "IMAGE_NAME=${REGISTRY_DOMAIN}/${PROJECT_ID}/${REGISTRY}/${APP_NAME}" >> $GITHUB_ENV
+
+      - name: export tag name
+        run: echo "TAG_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v4
+
+      - name: "gcloud auth"
+        uses: "google-github-actions/auth@v2"
+        with:
+          credentials_json: "${{ secrets.SERVICE_ACCOUNT_KEY }}"
+
+      - name: gcloud configure docker
+        run: gcloud --quiet auth configure-docker ${REGION}-docker.pkg.dev
+
+      - name: docker pull
+        run: docker pull ${IMAGE_NAME}:${GITHUB_SHA_SHORT}
+
+      - name: docker tag
+        run: docker tag ${IMAGE_NAME}:${GITHUB_SHA_SHORT} ${IMAGE_NAME}:${TAG_NAME}
+
+      - name: docker push
+        run: docker push ${IMAGE_NAME}:${TAG_NAME}
+
+      - name: gcloud run deploy
+        run: |
+          gcloud run deploy ${CLOUDRUN_SERVICE} \
+          --image=${IMAGE_NAME}:${TAG_NAME} \
+          --project=${PROJECT_ID} \
+          --region=${REGION} \
+          --set-env-vars=VERSION=${TAG_NAME}
