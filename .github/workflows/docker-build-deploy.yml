@@ -1,12 +1,14 @@
-name: Docker Build and Deploy
+name: Deploy to Production
 
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to deploy'
+        required: true
 
 jobs:
-  build-and-deploy:
+  deploy-prod:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,21 +26,24 @@ jobs:
       - name: Configure docker to use the gcloud command-line tool as a credential helper
         run: gcloud auth configure-docker europe-west9-docker.pkg.dev
 
-      - name: Extract git commit SHA
-        id: vars
-        run: echo "::set-output name=commit_id::$(echo $GITHUB_SHA | cut -c1-7)"
-
-      - name: Build and push Docker image
+      - name: Pull Docker image with tag
         run: |
-          docker build -t europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-dev:${{ steps.vars.outputs.commit_id }} .
-          docker push europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-dev:${{ steps.vars.outputs.commit_id }}
+          docker pull europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-preprod:${{ github.event.inputs.tag }}
+
+      - name: Tag Docker image for production
+        run: |
+          docker tag europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-preprod:${{ github.event.inputs.tag }} europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-prod:${{ github.event.inputs.tag }}
+
+      - name: Push Docker image to production
+        run: |
+          docker push europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-prod:${{ github.event.inputs.tag }}
 
       - name: Deploy to Cloud Run
         env:
           PROJECT_ID: "pokedevops"
-          SERVICE_NAME: "service-student-amine-dev"
+          SERVICE_NAME: "service-student-amine-prod"
           REGION: "europe-west9"
-          IMAGE: "europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-dev:${{ steps.vars.outputs.commit_id }}"
+          IMAGE: "europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-prod:${{ github.event.inputs.tag }}"
         run: |
           gcloud run deploy $SERVICE_NAME \
             --image $IMAGE \
