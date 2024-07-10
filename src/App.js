@@ -50,7 +50,7 @@ function App() {
         />
         <br />
         <button className="buttonValid" type="button" onClick={fetchPokemon}>
-          Découvrez votre Pokémon!
+          Découvrez votre POKéMON!
         </button>
       </header>
       <footer className="App-footer">
