@@ -33,8 +33,13 @@ jobs:
 
       - name: Check if Docker image with commit ID exists
         run: |
-          docker pull europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-dev:${{ steps.vars.outputs.commit_id }}
-          # Check if the pull was successful or handle error
+          if docker manifest inspect europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-dev:${{ steps.vars.outputs.commit_id }}; then
+            echo "Image exists, pulling..."
+            docker pull europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-dev:${{ steps.vars.outputs.commit_id }}
+          else
+            echo "Image not found or error pulling image."
+            exit 1
+          fi
 
       - name: Tag Docker image with new tag
         run: |
