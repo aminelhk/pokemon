@@ -14,10 +14,10 @@ on:
         required: true
 env:
   PROJECT_ID: pokedevops
-  APP_NAME: quelpoke
+  APP_NAME: pokemon
   REGION: europe-west9
-  REGISTRY: student-yann
-  CLOUDRUN_SERVICE_PREFIX: service-student-yann
+  REGISTRY: student-amine
+  CLOUDRUN_SERVICE_PREFIX: service-student-amine
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -31,7 +31,7 @@ jobs:
       - name: "gcloud auth"
         uses: "google-github-actions/auth@v2"
         with:
-          credentials_json: "${{ secrets.SERVICE_ACCOUNT_KEY }}"
+          credentials_json: "${{ secrets.GCLOUD_SERVICE_ACCOUNT_KEY }}"
 
       - name: gcloud configure docker
         run: gcloud --quiet auth configure-docker ${REGION}-docker.pkg.dev
