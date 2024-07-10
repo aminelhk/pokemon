@@ -18,7 +18,7 @@ jobs:
       - name: Log in to Google Cloud
         uses: google-github-actions/auth@v0
         with:
-          credentials_json: '${{ secrets.GCLOUD_SERVICE_ACCOUNT_KEY }}'
+          credentials_json: ${{ secrets.GCLOUD_SERVICE_ACCOUNT_KEY }}
 
       - name: Configure Docker for Google Cloud
         run: |
@@ -29,10 +29,12 @@ jobs:
 
       - name: Push the Docker image
         run: docker push europe-west9-docker.pkg.dev/pokedevops/student-amine/pokemon
-        
+
       - name: Deploy to Google Cloud Run
         run: |
-          gcloud run deploy service-student-amine-dev --image=europe-west9-docker.pkg.dev/pokedevops/student-amine/pokemon --project pokedevops --region europe-west9 --allow-unauthenticated
+          gcloud run deploy service-student-amine-dev \
+            --image=europe-west9-docker.pkg.dev/pokedevops/student-amine/pokemon \
+            --project pokedevops --region europe-west9 --allow-unauthenticated
         env:
           GCP_PROJECT: pokedevops
           GCP_REGION: europe-west9

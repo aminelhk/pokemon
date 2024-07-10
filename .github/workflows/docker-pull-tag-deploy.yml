@@ -3,7 +3,7 @@ name: Docker Pull, Tag, and Deploy
 on:
   push:
     tags:
-      - "v*" # Trigger on tags starting with 'v'
+      - "*" # Trigger on all tags
 
 jobs:
   pull-tag-deploy:
@@ -31,10 +31,10 @@ jobs:
           echo "::set-output name=tag_name::${TAG_NAME}"
           echo "Tag name: $TAG_NAME"
 
-      - name: Pull Docker image with Git tag
+      - name: Check if Docker image with tag exists
         run: |
           if docker pull europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-dev:${{ steps.vars.outputs.tag_name }}; then
-            echo "Image pulled successfully."
+            echo "Image exists, pulling..."
           else
             echo "Image not found or error pulling image."
             exit 1
