@@ -26,7 +26,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <p>Quel Pokémon es-tua ?</p>
+        <p>Quel Pokémon es-tu ?</p>
         {pokemon && (
           <div>
             <h2>{pokemon.name}</h2>
