@@ -33,12 +33,15 @@ jobs:
 
       - name: Check if Docker image with tag exists
         run: |
-          if docker pull europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-dev:${{ steps.vars.outputs.tag_name }}; then
+          if docker manifest inspect europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-dev:${{ steps.vars.outputs.tag_name }}; then
             echo "Image exists, pulling..."
           else
             echo "Image not found or error pulling image."
             exit 1
           fi
+
+      - name: Pull Docker image with tag
+        run: docker pull europe-west9-docker.pkg.dev/pokedevops/student-amine/service-student-amine-dev:${{ steps.vars.outputs.tag_name }}
 
       - name: Tag Docker image with new tag
         run: |
